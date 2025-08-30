@@ -1,0 +1,183 @@
+type Query {
+  _empty: String
+  findFriends(input: FindFriendsInput!): FindFriendsResponse!
+  findTeetimeCourse(input: FindTeetimeCourseInput!): FindTeetimeCourseResponse!
+}
+
+type Mutation {
+  loginUser(input: LoginUserInput!): LoginUserResponse!
+  refreshAccessToken(input: RefreshAccessTokenInput!): RefreshAccessTokenResponse!
+}
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+type LoginUserResponse {
+  accessToken: String
+  refreshToken: String
+}
+
+input RefreshAccessTokenInput {
+  refreshToken: String!
+}
+
+type RefreshAccessTokenResponse {
+  accessToken: String
+}
+
+input FindFriendsInput {
+  bookingTypeId: String
+  slotDate: String
+  checkPayment: Boolean
+}
+
+type FindFriendsResponse {
+  players: [Player!]!
+  playerGroups: [PlayerGroup!]!
+  friendsNotConfirmed: [Friend!]!
+  friendsDeclined: [Friend!]!
+}
+
+type Player {
+  nameLong: String
+  lastName: String
+  firstName: String
+  hcp: String
+  id: String
+  sex_sport: String
+  showAvatar: Boolean
+  avatarLink: String
+  confirmed: Boolean
+  price: String
+  price9L: String
+  payGreenfee: Boolean
+  forceGreenfeePayment: Boolean
+  hasAbo: Boolean
+}
+
+type PlayerGroup {
+  id: String
+  name: String
+  showContent: Boolean
+  players: [GroupPlayer!]!
+}
+
+type GroupPlayer {
+  nameLong: String
+  id: String
+  sex_sport: String
+  showAvatar: Boolean
+  avatarLink: String
+}
+
+type Friend {
+  nameLong: String
+  id: String
+  sex_sport: String
+  showAvatar: Boolean
+  avatarLink: String
+  confirmed: Boolean
+}
+
+input FindTeetimeCourseInput {
+  id: Int
+  date: String!
+  isMobile: Boolean!
+  freeSpots: Int!
+  minHour: Int!
+  maxHour: Int!
+}
+
+type FindTeetimeCourseResponse {
+  bookingType: BookingType
+}
+
+type BookingType {
+  _id: String
+  selection: [Selection!]!
+  courseid: String
+  name: String
+  dayComment: String
+  sunset: String
+  additionalText: String
+  slots: [Slot!]!
+  maxPersonsBookable: Int
+  shortName: String
+  bookingDuration: Int
+  hasBookings: Boolean
+  showAvailableSlots: Boolean
+  showBookedSlots: Boolean
+  withSlider: Boolean
+  intervallBetweenBookings: Int
+  maxBookingsInFuture: Int
+  maxBookingsPerDay: Int
+  maxBookingsPerWeek: Int
+  online: Boolean
+  periodFrom: String
+  periodTo: String
+  showDog: Boolean
+  show9Hole: Boolean
+  showPlayWithMe: Boolean
+  greenfeePaymentEnabled: Boolean
+  showGreenfeePrice: Boolean
+  cartPaymentEnabled: Boolean
+  showCartfeePrice: Boolean
+  allowmanualperson: Boolean
+}
+
+type Selection {
+  _id: String
+  courseid: String
+  name: String
+}
+
+type Slot {
+  show9Hole: Boolean
+  timeColor: String
+  currentSlot: String
+  date: String
+  showBookingIcon: Boolean
+  userAllowedToBook: Boolean
+  showPlayers: Boolean
+  isTeetimeLocked: Boolean
+  isLocked: Boolean
+  lockCause: String
+  isPast: Boolean
+  price: String
+  price9L: String
+  allowPrice9L: Boolean
+  showDog: Boolean
+  currencySymbol: String
+  bookingPersons: [BookingPerson!]!
+  carts: [Cart!]!
+}
+
+type BookingPerson {
+  withCart: Boolean
+  firstName: String
+  lastName: String
+  hcpi: String
+  gender: String
+  avatarLink: String
+  isMyBooking: Boolean
+  isBookedByMe: Boolean
+  uniqueId: String
+  member: Boolean
+  withDog: Boolean
+  with9Hole: Boolean
+  withPlayWithMe: Boolean
+  showAvatar: Boolean
+  canDelete: Boolean
+  date: String
+}
+
+type Cart {
+  cid: String
+  name: String
+  isAvailable: Boolean
+  price: String
+  priceFloat: Float
+  date: String
+}

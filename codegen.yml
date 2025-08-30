@@ -1,0 +1,12 @@
+overwrite: true
+schema: "schema.graphql"
+documents: "src/**/*.{ts,tsx}"
+generates:
+  generated/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-graphql-request"
+    config:
+      rawRequest: false
+      gqlImport: graphql-request#gql
