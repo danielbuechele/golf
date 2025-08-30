@@ -2,11 +2,16 @@ type Query {
   _empty: String
   findFriends(input: FindFriendsInput!): FindFriendsResponse!
   findTeetimeCourse(input: FindTeetimeCourseInput!): FindTeetimeCourseResponse!
+  getFlightPlayersById(
+    input: GetFlightPlayersByIdInput!
+  ): GetFlightPlayersByIdResponse!
 }
 
 type Mutation {
   loginUser(input: LoginUserInput!): LoginUserResponse!
-  refreshAccessToken(input: RefreshAccessTokenInput!): RefreshAccessTokenResponse!
+  refreshAccessToken(
+    input: RefreshAccessTokenInput!
+  ): RefreshAccessTokenResponse!
 }
 
 input LoginUserInput {
@@ -97,7 +102,7 @@ type FindTeetimeCourseResponse {
 type BookingType {
   _id: String
   selection: [Selection!]!
-  courseid: String
+  courseid: Int
   name: String
   dayComment: String
   sunset: String
@@ -137,7 +142,7 @@ type Slot {
   show9Hole: Boolean
   timeColor: String
   currentSlot: String
-  date: String
+  date: String!
   showBookingIcon: Boolean
   userAllowedToBook: Boolean
   showPlayers: Boolean
@@ -180,4 +185,30 @@ type Cart {
   price: String
   priceFloat: Float
   date: String
+}
+
+input GetFlightPlayersByIdInput {
+  id: Int
+  bookingTypeId: Int!
+  slotDate: String!
+}
+
+type GetFlightPlayersByIdResponse {
+  flightPlayers: [FlightPlayer!]!
+}
+
+type FlightPlayer {
+  id: String
+  firstName: String
+  lastName: String
+  withDog: Boolean
+  show9Hole: Boolean
+  showPlayWithMe: Boolean
+  hcp: String
+  price: String
+  price9L: String
+  allowPrice9L: Boolean
+  hasAbo: Boolean
+  payGreenfee: Boolean
+  forceGreenfeePayment: Boolean
 }

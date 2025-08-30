@@ -1,5 +1,5 @@
 import { GraphQLClient } from 'graphql-request';
-import { getSdk } from '../generated/graphql';
+import { getSdk } from '../generated/graphql.js';
 
 const endpoint = 'https://backend-germering4u.cio.golf/';
 
