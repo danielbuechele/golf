@@ -11,7 +11,7 @@ import { getWeatherData, WeatherData } from "./weather.js";
 export function getLocalDate(offsetDays: number = 0): string {
   const now = new Date();
   const localDate = new Date(
-    now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
+    now.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
   );
   localDate.setDate(localDate.getDate() + offsetDays);
   return localDate.toISOString().split("T")[0];
@@ -40,7 +40,7 @@ export function parseBasicAuth(authHeader: string | null | undefined): {
 
   const base64Credentials = authHeader.slice(6);
   const credentials = Buffer.from(base64Credentials, "base64").toString(
-    "ascii",
+    "ascii"
   );
   const [username, password] = credentials.split(":");
 
@@ -75,7 +75,7 @@ export async function handleRequest(authHeader: string | null | undefined) {
     },
     {
       Authorization: `Bearer ${result.loginUser.accessToken}`,
-    },
+    }
   );
 
   const weatherData = await getWeatherData();
@@ -85,7 +85,7 @@ export async function handleRequest(authHeader: string | null | undefined) {
 
   // Create a set of friend names for quick lookup
   const friendNames = new Set(
-    friends.map((friend) => `${friend.firstName} ${friend.lastName}`),
+    friends.map((friend) => `${friend.firstName} ${friend.lastName}`)
   );
 
   // Define booking type
@@ -103,7 +103,7 @@ export async function handleRequest(authHeader: string | null | undefined) {
   // Helper function to process bookings for a day
   function processBookingsForDay(
     dayBookings: GetDataQuery["course1day1"][],
-    weatherData: WeatherData,
+    weatherData: WeatherData
   ): {
     date: string;
     bookings: Booking[];
@@ -123,7 +123,7 @@ export async function handleRequest(authHeader: string | null | undefined) {
         }
         // Check if at least one player in this booking is a friend
         const hasFriend = slot.bookingPersons.some((person) =>
-          friendNames.has(`${person.firstName} ${person.lastName}`),
+          friendNames.has(`${person.firstName} ${person.lastName}`)
         );
 
         if (
@@ -142,6 +142,7 @@ export async function handleRequest(authHeader: string | null | undefined) {
             timeZone: "Europe/Berlin",
           }),
           courseId,
+          isMyBooking: slot.bookingPersons.some((person) => person.isMyBooking),
           players: slot.bookingPersons.map((person) => ({
             firstName: person.firstName || "",
             lastName: person.lastName || "",
@@ -161,11 +162,11 @@ export async function handleRequest(authHeader: string | null | undefined) {
           weekday: "long",
           month: "numeric",
           day: "numeric",
-        },
+        }
       ),
       ...weatherData,
       bookings: result.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       ),
     };
   }
@@ -174,15 +175,15 @@ export async function handleRequest(authHeader: string | null | undefined) {
     days: [
       processBookingsForDay(
         [data.course1day1, data.course2day1],
-        weatherData[0],
+        weatherData[0]
       ),
       processBookingsForDay(
         [data.course1day2, data.course2day2],
-        weatherData[1],
+        weatherData[1]
       ),
       processBookingsForDay(
         [data.course1day3, data.course2day3],
-        weatherData[2],
+        weatherData[2]
       ),
     ],
     updatedAt: new Date().toLocaleString("de-DE", {
