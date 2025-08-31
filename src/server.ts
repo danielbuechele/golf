@@ -6,90 +6,15 @@ import type {
   GetDataQuery,
 } from "../generated/graphql.js";
 import { LOGIN_USER, GET_DATA } from "./queries.js";
+import { getWeatherData, WeatherData } from "./weather.js";
 
 export function getLocalDate(offsetDays: number = 0): string {
   const now = new Date();
   const localDate = new Date(
-    now.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+    now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
   );
   localDate.setDate(localDate.getDate() + offsetDays);
   return localDate.toISOString().split("T")[0];
-}
-
-export function getBookingDates(
-  bookings: GetDataQuery["course1day1"][],
-  {
-    firstName,
-    lastName,
-  }: {
-    firstName?: string | null;
-    lastName?: string | null;
-  }
-) {
-  const bookingDates: Array<{
-    date: Date;
-    courseId: number;
-  }> = [];
-  for (const booking of bookings) {
-    for (const slot of booking.bookingType?.slots || []) {
-      for (const person of slot.bookingPersons) {
-        if (slot.date < new Date().toISOString()) {
-          continue;
-        }
-        if (person.firstName === firstName && person.lastName === lastName) {
-          bookingDates.push({
-            date: new Date(slot.date),
-            courseId: booking.bookingType!.courseid!,
-          });
-        }
-      }
-    }
-  }
-
-  return bookingDates;
-}
-
-export function getAvatarLink(
-  bookings: GetDataQuery["course1day1"][],
-  {
-    firstName,
-    lastName,
-  }: {
-    firstName?: string | null;
-    lastName?: string | null;
-  }
-) {
-  for (const booking of bookings) {
-    for (const slot of booking.bookingType?.slots || []) {
-      for (const person of slot.bookingPersons) {
-        if (person.firstName === firstName && person.lastName === lastName) {
-          return person.avatarLink;
-        }
-      }
-    }
-  }
-  return null;
-}
-
-export function parseBasicAuth(authHeader: string | null | undefined): {
-  username: string;
-  password: string;
-} {
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
-    throw new Error("Missing or invalid authorization header");
-  }
-
-  const base64Credentials = authHeader.slice(6);
-  const credentials = Buffer.from(base64Credentials, "base64").toString(
-    "ascii"
-  );
-  const [username, password] = credentials.split(":");
-
-  if (!username || !password) {
-    throw new Error("Invalid credentials format");
-  }
-
-  return { username, password };
 }
 
 export function parseHCP(hcp: string | null | undefined): number | null {
@@ -103,6 +28,27 @@ export function parseHCP(hcp: string | null | undefined): number | null {
   }
 
   return float;
+}
+
+export function parseBasicAuth(authHeader: string | null | undefined): {
+  username: string;
+  password: string;
+} {
+  if (!authHeader || !authHeader.startsWith("Basic ")) {
+    throw new Error("Missing or invalid authorization header");
+  }
+
+  const base64Credentials = authHeader.slice(6);
+  const credentials = Buffer.from(base64Credentials, "base64").toString(
+    "ascii",
+  );
+  const [username, password] = credentials.split(":");
+
+  if (!username || !password) {
+    throw new Error("Invalid credentials format");
+  }
+
+  return { username, password };
 }
 
 export async function handleRequest(authHeader: string | null | undefined) {
@@ -126,40 +72,126 @@ export async function handleRequest(authHeader: string | null | undefined) {
       dateOne: getLocalDate(0),
       dateTwo: getLocalDate(1),
       dateThree: getLocalDate(2),
-      dateFour: getLocalDate(3),
-      dateFive: getLocalDate(4),
     },
     {
       Authorization: `Bearer ${result.loginUser.accessToken}`,
-    }
+    },
   );
 
-  const bookings = [
-    data.course1day1,
-    data.course2day1,
-    data.course1day2,
-    data.course2day2,
-    data.course1day3,
-    data.course2day3,
-    data.course1day4,
-    data.course2day4,
-    data.course1day5,
-    data.course2day5,
-  ];
+  const weatherData = await getWeatherData();
 
-  const [me, ...friends] = [
-    ...data.me.flightPlayers,
-    ...data.findFriends.players,
-  ].map((p) => ({
-    firstName: p.firstName,
-    lastName: p.lastName,
-    hcp: parseHCP(p.hcp),
-    bookingDates: getBookingDates(bookings, p),
-    avatarLink: getAvatarLink(bookings, p) || null,
-  }));
+  // Get all friends (including me)
+  const friends = data.findFriends.players;
+
+  // Create a set of friend names for quick lookup
+  const friendNames = new Set(
+    friends.map((friend) => `${friend.firstName} ${friend.lastName}`),
+  );
+
+  // Define booking type
+  type Booking = {
+    date: string;
+    time: string;
+    courseId: number;
+    players: Array<{
+      firstName: string;
+      lastName: string;
+      hcp: number | null;
+    }>;
+  };
+
+  // Helper function to process bookings for a day
+  function processBookingsForDay(
+    dayBookings: GetDataQuery["course1day1"][],
+    weatherData: WeatherData,
+  ): {
+    date: string;
+    bookings: Booking[];
+  } {
+    const result: Booking[] = [];
+
+    for (const booking of dayBookings) {
+      if (!booking.bookingType) {
+        continue;
+      }
+
+      const courseId = booking.bookingType.courseid!;
+
+      for (const slot of booking.bookingType.slots || []) {
+        if (slot.isPast) {
+          continue;
+        }
+        // Check if at least one player in this booking is a friend
+        const hasFriend = slot.bookingPersons.some((person) =>
+          friendNames.has(`${person.firstName} ${person.lastName}`),
+        );
+
+        if (
+          !hasFriend &&
+          !slot.bookingPersons.some((person) => person.isMyBooking)
+        ) {
+          continue;
+        }
+
+        // Create the booking object
+        const bookingObj = {
+          date: slot.date,
+          time: new Date(slot.date).toLocaleString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Europe/Berlin",
+          }),
+          courseId,
+          players: slot.bookingPersons.map((person) => ({
+            firstName: person.firstName || "",
+            lastName: person.lastName || "",
+            hcp: parseHCP(person.hcpi),
+          })),
+        };
+
+        result.push(bookingObj);
+      }
+    }
+
+    // Sort bookings by time (earliest first)
+    return {
+      date: new Date(dayBookings[0].bookingType!.slots[0].date).toLocaleString(
+        "de-DE",
+        {
+          weekday: "long",
+          month: "numeric",
+          day: "numeric",
+        },
+      ),
+      ...weatherData,
+      bookings: result.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      ),
+    };
+  }
 
   return {
-    me,
-    friends,
+    days: [
+      processBookingsForDay(
+        [data.course1day1, data.course2day1],
+        weatherData[0],
+      ),
+      processBookingsForDay(
+        [data.course1day2, data.course2day2],
+        weatherData[1],
+      ),
+      processBookingsForDay(
+        [data.course1day3, data.course2day3],
+        weatherData[2],
+      ),
+    ],
+    updatedAt: new Date().toLocaleString("de-DE", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Berlin",
+    }),
   };
 }

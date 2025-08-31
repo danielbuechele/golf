@@ -5,6 +5,7 @@ const BOOKING_TYPE_FRAGMENT = gql`
     courseid
     slots {
       date
+      isPast
       bookingPersons {
         firstName
         lastName
@@ -38,18 +39,7 @@ export const GET_DATA = gql`
     $dateOne: String!
     $dateTwo: String!
     $dateThree: String!
-    $dateFour: String!
-    $dateFive: String!
   ) {
-    me: getFlightPlayersById(
-      input: { id: 0, bookingTypeId: 1, slotDate: "2000-01-01" }
-    ) {
-      flightPlayers {
-        firstName
-        lastName
-        hcp
-      }
-    }
     findFriends(input: {}) {
       players {
         id
@@ -100,34 +90,6 @@ export const GET_DATA = gql`
         ...BookingTypeFragment
       }
     }
-    course1day4: findTeetimeCourse(
-      input: {
-        id: 1
-        date: $dateFour
-        isMobile: false
-        freeSpots: 0
-        minHour: 0
-        maxHour: 0
-      }
-    ) {
-      bookingType {
-        ...BookingTypeFragment
-      }
-    }
-    course1day5: findTeetimeCourse(
-      input: {
-        id: 1
-        date: $dateFive
-        isMobile: false
-        freeSpots: 0
-        minHour: 0
-        maxHour: 0
-      }
-    ) {
-      bookingType {
-        ...BookingTypeFragment
-      }
-    }
     course2day1: findTeetimeCourse(
       input: {
         id: 2
@@ -160,34 +122,6 @@ export const GET_DATA = gql`
       input: {
         id: 2
         date: $dateThree
-        isMobile: false
-        freeSpots: 0
-        minHour: 0
-        maxHour: 0
-      }
-    ) {
-      bookingType {
-        ...BookingTypeFragment
-      }
-    }
-    course2day4: findTeetimeCourse(
-      input: {
-        id: 2
-        date: $dateFour
-        isMobile: false
-        freeSpots: 0
-        minHour: 0
-        maxHour: 0
-      }
-    ) {
-      bookingType {
-        ...BookingTypeFragment
-      }
-    }
-    course2day5: findTeetimeCourse(
-      input: {
-        id: 2
-        date: $dateFive
         isMobile: false
         freeSpots: 0
         minHour: 0
